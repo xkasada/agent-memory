@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+# Pre-commit gate for the LLM Wiki vault: build + lint + source-lint.
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$root"
+
+export PYTHONUTF8=1
+export PYTHONIOENCODING=utf-8
+
+run_py() {
+  # Prefer the Windows py launcher when present; avoid bare `python` stubs.
+  if command -v py >/dev/null 2>&1; then
+    py -3 "$@"
+    return $?
+  fi
+  if command -v python3 >/dev/null 2>&1; then
+    python3 "$@"
+    return $?
+  fi
+  if command -v python >/dev/null 2>&1; then
+    python "$@"
+    return $?
+  fi
+  echo "error: python3/python/py not found" >&2
+  exit 1
+}
+
+echo "pre-commit: wiki_tool build"
+run_py scripts/wiki_tool.py build
+echo "pre-commit: wiki_tool lint"
+run_py scripts/wiki_tool.py lint
+echo "pre-commit: wiki_tool source-lint"
+run_py scripts/wiki_tool.py source-lint
+
+echo "pre-commit: ok"

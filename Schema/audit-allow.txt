@@ -1,0 +1,2 @@
+﻿# audit_public allow-list — one fnmatch glob per line relative to the vault root.
+# `#` starts a comment. Use for deliberate, reviewed exceptions only.

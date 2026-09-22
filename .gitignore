@@ -1,15 +1,77 @@
-# macOS
+# =============================================================================
+# Public repo = structure + architecture + infrastructure only.
+# Personal knowledge content (Raw sources, compiled Wiki, manifests, logs)
+# stays local and is NOT pushed to GitHub.
+# =============================================================================
+
+# --- OS / editor junk ---
 .DS_Store
+Thumbs.db
 
-# Obsidian local/runtime state
-.obsidian/workspace*.json
-.obsidian/plugins/
-.obsidian/cache/
-.obsidian/logs/
+# --- Obsidian local vault state (not shared architecture) ---
+.obsidian/
 
-# Local raw attachments (keep folder via .gitkeep)
-Raw/Files/*
-!Raw/Files/.gitkeep
+# --- Python / env ---
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+.env
+.env.*
 
-# Working drafts
+# --- Vault runtime ---
+.runs/
+Schema/.vault.lock
 Drafts/
+_import_memory/
+
+# =============================================================================
+# CONTENT — ignore everything under knowledge folders...
+# =============================================================================
+
+# Raw intake (sources, project mirrors, attachments, titles)
+Raw/Sources/**
+Raw/Projects/**
+Raw/Files/**
+Raw/Titles/**
+
+# Compiled wiki pages + generated indexes/catalog/log
+Wiki/Topics/**
+Wiki/Concepts/**
+Wiki/Entities/**
+Wiki/Projects/**
+Wiki/Logs/**
+Wiki/catalog.jsonl
+Wiki/index.md
+Wiki/log.md
+
+# Generated coverage manifest (personal corpus state)
+Schema/source-manifest.jsonl
+
+# =============================================================================
+# ...but keep empty folder structure via .gitkeep
+# =============================================================================
+
+!Raw/Sources/.gitkeep
+!Raw/Projects/.gitkeep
+!Raw/Files/.gitkeep
+!Raw/Titles/.gitkeep
+
+!Wiki/Topics/.gitkeep
+!Wiki/Concepts/.gitkeep
+!Wiki/Entities/.gitkeep
+!Wiki/Projects/.gitkeep
+!Wiki/Logs/.gitkeep
+
+# =============================================================================
+# TRACKED (do not ignore) — architecture & infrastructure
+#   AGENTS.md
+#   Schema/*.md, Schema/_templates/, Schema/audit-allow.txt, Schema/command-reference.md
+#   .agents/skills/**
+#   scripts/**
+#   .githooks/**
+#   .cursor/mcp.json
+#   tutorial/.gitkeep
+#   .gitignore
+# =============================================================================

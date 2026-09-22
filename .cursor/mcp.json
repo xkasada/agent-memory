@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "memory-vault": {
+      "command": "py",
+      "args": ["-3", "scripts/vault_mcp.py"],
+      "env": {
+        "PYTHONUTF8": "1",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
