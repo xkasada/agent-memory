@@ -143,7 +143,7 @@ Tools:
 | `read_note(path)` | read a `Wiki/` note or `Raw/` file (path relative to vault) |
 | `read_project(project)` | anchor note + component list for a project |
 | `list_recent(limit?)` | recently updated compiled notes |
-| `stage_note(project, kind, name, body)` | write a raw project note under `Raw/Projects/` (locked, write-once) |
+| `stage_note(project, kind, name, body, component?)` | write/overwrite a raw note under `Raw/Projects/` (locked). Optional `component` = service/SPA folder (`vue-project`, `auth-service`); kinds then land in `<component>/domains/` etc. |
 | `log(title, details?)` | append to `Wiki/log.md` (locked) |
 
 `stage_note` only **captures**; run `project-ingest`/`build` (or the periodic job) to

@@ -84,9 +84,11 @@ repo) writes raw notes over MCP (`stage_note`); a repo may still carry a local
 `.context/packs/` bundle for handoff, but no `.context/` tree.
 
 - **`Raw/Projects/<project>/`** — a **refreshable** mirror of project context:
-  `INDEX.md`, `domains/`, `entities/`, `layers/`, `contracts/`, `tech/`, plus
-  project-specific subfolders (e.g. `modules/`, `artifacts/`, `partitions/`). `packs/`
-  are derived and ignored. Unlike `Raw/Sources/` (strictly write-once), notes here may
+  `INDEX.md`, optional **components** (`vue-project/`, `auth-service/`, …) each with
+  their own `domains/`, `entities/`, `layers/`, `contracts/`, `tech/`, plus
+  project-level or component-level notes. MCP `stage_note(..., component=)` writes
+  into a component; omit `component` for project-root kinds. `packs/` are derived
+  and ignored. Unlike `Raw/Sources/` (strictly write-once), notes here may
   be **overwritten** (e.g. by `vault_stage_note`). Each file carries the source
   frontmatter plus `project:` and `kind:` (a canonical kind such as
   `index | context | domain | entity | layer | contract | tech | module | artifact`,
@@ -123,11 +125,13 @@ python3 scripts/wiki_tool.py log --title "ingest: X" --details "+1 note"
 
 Agents read the vault (and hand new project knowledge back) over MCP via
 `scripts/vault_mcp.py` — read tools (`search_catalog`, `read_note`, `read_project`,
-`list_recent`) plus write tools (`stage_note` writes/overwrites a `Raw/Projects/` note,
+`list_recent`) plus write tools (`stage_note` writes/overwrites a `Raw/Projects/` note —
+optionally under a `component` module folder with its own `domains/`/`layers/`/… —
 `project_ingest` compiles it into `Wiki/Projects/` and rebuilds the catalog, `log`
 appends to `Wiki/log.md`); all writes take a global lock. The periodic job
 `scripts/maintain_vault.py` runs the toolchain (incl. `project-ingest`) then the
-maintenance agent every 3h.
+Cursor Agent CLI (`agent -p --force --trust`; optional `--agent opencode` fallback)
+every 3h.
 
 Git hooks: `sh scripts/install_hooks.sh` sets `core.hooksPath=.githooks`; the
 pre-commit hook runs `build`, `lint`, and `source-lint`. Before publishing,

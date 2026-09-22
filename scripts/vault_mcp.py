@@ -3,19 +3,20 @@
 
 Speaks JSON-RPC 2.0 over stdio (newline-delimited). Read tools search/read the
 compiled wiki. Write tools: `stage_note` drops/overwrites a note under
-`Raw/Projects/<project>/`, `project_ingest` compiles Raw/Projects into Wiki and
-rebuilds the catalog, and `log` appends to Wiki/log.md. Writes take a global lock
-(Schema/.vault.lock); reads do not.
+`Raw/Projects/<project>/` (optionally under a component/module folder),
+`project_ingest` compiles Raw/Projects into Wiki and rebuilds the catalog, and
+`log` appends to Wiki/log.md. Writes take a global lock (Schema/.vault.lock);
+reads do not.
 
 Tools
 -----
-  search_catalog(query, project?, limit?)   search Wiki/catalog.jsonl
-  read_note(path)                           read a Wiki/ or Raw/ markdown file
-  read_project(project)                     anchor + component list for a project
-  list_recent(limit?)                       recently updated compiled notes
-  stage_note(project, kind, name, body)     write/overwrite a raw project note (locked)
-  project_ingest(project?)                  compile Raw/Projects -> Wiki + rebuild catalog
-  log(title, details?)                      append to Wiki/log.md (locked)
+  search_catalog(query, project?, limit?)              search Wiki/catalog.jsonl
+  read_note(path)                                      read a Wiki/ or Raw/ markdown file
+  read_project(project)                                anchor + component list for a project
+  list_recent(limit?)                                  recently updated compiled notes
+  stage_note(project, kind, name, body, component?)    write/overwrite a raw project note (locked)
+  project_ingest(project?)                             compile Raw/Projects -> Wiki + rebuild catalog
+  log(title, details?)                                 append to Wiki/log.md (locked)
 
 Stdlib only. Configure an MCP client with:  python scripts/vault_mcp.py
 """
@@ -38,7 +39,7 @@ import wiki_tool as wt  # noqa: E402  (same directory)
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "memory-vault"
-SERVER_VERSION = "0.1.0"
+SERVER_VERSION = "0.2.0"
 LOCK = wt.SCHEMA / ".vault.lock"
 PROJECT_SUB = {
     "context": "",
@@ -51,15 +52,19 @@ PROJECT_SUB = {
     "module": "modules",
     "artifact": "artifacts",
 }
+# Folder names reserved for kinds — cannot be used as component/module ids.
+RESERVED_COMPONENT_NAMES = frozenset(
+    list(PROJECT_SUB.values()) + list(wt.PROJECT_SUB_KIND) + ["packs", ""]
+)
 SAFE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _.\-()]*$")
 
 
 def _kind_sub(kind: str) -> str:
-    """Map a raw kind to its `Raw/Projects/<project>/` subfolder.
+    """Map a raw kind to its kind-folder under the project or component.
 
     Canonical kinds (see PROJECT_SUB) map to their folder; a bare folder name
     (`domains`, `modules`, or a generic `partitions`) is used as-is. Returns ''
-    for a top-level note (context/index).
+    for a top-level note (context/index/module-at-component-root).
     """
     if kind in PROJECT_SUB:
         return PROJECT_SUB[kind]
@@ -68,11 +73,41 @@ def _kind_sub(kind: str) -> str:
     return ""
 
 
-def _kind_norm(kind: str, sub: str) -> str:
+def _kind_norm(kind: str, sub: str, *, under_component: bool = False) -> str:
     """Normalize the frontmatter `kind` so it matches the folder-derived kind."""
+    if under_component and kind == "module":
+        return "module"
     if sub == "":
+        if under_component and kind in ("index", "module", "context"):
+            return "module" if kind in ("index", "module") else "context"
         return kind if kind in ("context", "index") else "context"
     return wt.PROJECT_SUB_KIND.get(sub, sub)
+
+
+def _stage_out_path(project: str, kind: str, name: str, component: str = "") -> tuple[Path, str]:
+    """Resolve output path + frontmatter kind for stage_note.
+
+    Without component:
+      index/context → Raw/Projects/<project>/<name>.md
+      domain        → Raw/Projects/<project>/domains/<name>.md
+      module        → Raw/Projects/<project>/modules/<name>.md
+
+    With component (monorepo service / SPA / future backend):
+      module|index  → Raw/Projects/<project>/<component>/<name>.md  (usually INDEX)
+      domain        → Raw/Projects/<project>/<component>/domains/<name>.md
+      …same for entity/layer/contract/tech/artifact
+    """
+    sub = _kind_sub(kind)
+    under = bool(component)
+    if under and kind in ("module", "index", "context"):
+        # Component shell notes live at the component root, not under modules/.
+        sub = ""
+    kind_norm = _kind_norm(kind, sub, under_component=under)
+    base = wt.RAW_PROJECTS / project
+    if component:
+        base = base / component
+    out = (base / sub / f"{name}.md") if sub else (base / f"{name}.md")
+    return out, kind_norm
 
 
 # --------------------------------------------------------------------------- #
@@ -184,7 +219,7 @@ def tool_list_recent(limit: int = 15):
     return "\n".join(out) or "no notes"
 
 
-def tool_stage_note(project: str, kind: str, name: str, body: str):
+def tool_stage_note(project: str, kind: str, name: str, body: str, component: str = ""):
     if not SAFE.match(project or ""):
         return "invalid project name"
     if not wt.valid_project_raw_kind(kind or ""):
@@ -195,10 +230,17 @@ def tool_stage_note(project: str, kind: str, name: str, body: str):
         )
     if not SAFE.match(name or ""):
         return "invalid note name"
-    sub = _kind_sub(kind)
-    kind_norm = _kind_norm(kind, sub)
+    component = (component or "").strip()
+    if component:
+        if not SAFE.match(component):
+            return "invalid component name"
+        if component.lower() in {r.lower() for r in RESERVED_COMPONENT_NAMES if r}:
+            return (
+                f"component '{component}' collides with a kind folder; "
+                "use a service/module id (e.g. vue-project, auth-service)"
+            )
+    out, kind_norm = _stage_out_path(project, kind, name, component)
     title = name
-    out = (wt.RAW_PROJECTS / project / sub / f"{name}.md") if sub else (wt.RAW_PROJECTS / project / f"{name}.md")
     header = (
         "---\n"
         f'Title: "{title}"\n'
@@ -310,11 +352,15 @@ TOOLS = {
     },
     "stage_note": {
         "description": (
-            "Write/overwrite a raw project note under Raw/Projects/<project>/<kind>/ "
-            "for the project-ingest process to compile (locked). kind is a canonical "
-            "kind (context|index|domain|entity|layer|contract|tech|module|artifact) or "
-            "a folder name (domains|entities|layers|contracts|tech|partitions|...). "
-            "Raw/Projects is a refreshable mirror, so an existing note is overwritten."
+            "Write/overwrite a raw project note under Raw/Projects/<project>/ "
+            "for project-ingest to compile (locked). "
+            "kind: context|index|domain|entity|layer|contract|tech|module|artifact "
+            "or a folder name. "
+            "Optional component: monorepo service/SPA id (vue-project, auth-service) — "
+            "writes Raw/Projects/<project>/<component>/<kind-folder>/<name>.md "
+            "(module|index → <component>/INDEX.md). "
+            "Without component, kinds land at the project root as before. "
+            "Raw/Projects is a refreshable mirror (overwrite allowed)."
         ),
         "inputSchema": {
             "type": "object",
@@ -323,10 +369,20 @@ TOOLS = {
                 "kind": {"type": "string"},
                 "name": {"type": "string"},
                 "body": {"type": "string"},
+                "component": {
+                    "type": "string",
+                    "description": (
+                        "Optional module/service folder under the project "
+                        "(e.g. vue-project, item-info-service). "
+                        "Each component has its own domains/entities/layers/…"
+                    ),
+                },
             },
             "required": ["project", "kind", "name", "body"],
         },
-        "fn": lambda a: tool_stage_note(a["project"], a["kind"], a["name"], a.get("body", "")),
+        "fn": lambda a: tool_stage_note(
+            a["project"], a["kind"], a["name"], a.get("body", ""), a.get("component", "")
+        ),
     },
     "project_ingest": {
         "description": (
