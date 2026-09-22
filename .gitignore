@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Obsidian local/runtime state
+.obsidian/workspace*.json
+.obsidian/plugins/
+.obsidian/cache/
+.obsidian/logs/
+
+# Local raw attachments (keep folder via .gitkeep)
+Raw/Files/*
+!Raw/Files/.gitkeep
+
+# Working drafts
+Drafts/
