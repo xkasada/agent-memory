@@ -47,8 +47,8 @@ Produces:
 Rules:
 - One anchor per project; component titles derived from the `.context` headings.
 - Colliding titles are suffixed `Title (project)` so `[[wikilinks]]` stay unique.
-- Every project note's `sources:` points at its `Raw/Projects/...` file; keep
-  `source_count` equal.
+- Every project note's `sources:` (frontmatter only) points at its `Raw/Projects/...`
+  file; keep `source_count` equal. Do **not** dump Raw paths into the note body.
 
 ## 3. Judgment (agent pass, after the tool)
 

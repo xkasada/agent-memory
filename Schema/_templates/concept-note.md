@@ -30,7 +30,3 @@ aliases: []
 
 - [[Parent Topic]] — {where this concept sits}
 - [[Related Note]] — {relationship}
-
-## Sources
-
-- `Raw/Sources/{filename}.md` — {what was drawn from this source}

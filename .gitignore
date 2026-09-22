@@ -9,7 +9,9 @@
 Thumbs.db
 
 # --- Obsidian local vault state (not shared architecture) ---
-.obsidian/
+.obsidian/*
+# Share the global graph filter that keeps Raw/ out of the Obsidian graph
+!.obsidian/graph.json
 
 # --- Python / env ---
 __pycache__/

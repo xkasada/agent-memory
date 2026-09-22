@@ -31,7 +31,3 @@ inline: per [author], per [study], etc.}
 
 - [[Related Topic]] — {how it connects in one phrase}
 - [[Related Note]] — {how it connects in one phrase}
-
-## Sources
-
-- `Raw/Sources/{filename}.md` — {what was drawn from this source}

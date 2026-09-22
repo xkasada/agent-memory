@@ -23,7 +23,3 @@ This is the anchor for the project subtree; `[[wikilinks]]` scope is followed fr
 ## Connections
 
 - [[{component}]] — {kind} — {one-line summary}
-
-## Sources
-
-- `Raw/Projects/{project}/INDEX.md` — project router / one-liner

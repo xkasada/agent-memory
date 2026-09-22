@@ -21,7 +21,3 @@ aliases: []
 ## Connections
 
 - [[Related Note]] — {what this entry relates to}
-
-## Sources
-
-- `Raw/Sources/{filename}.md` — {source for this entry}

@@ -49,7 +49,8 @@ Read `AGENTS.md`, `Schema/frontmatter-schema.md`,
      `source_count` equal to the list length.
    - `status`: `seed` | `growing` | `mature` (pick honestly; default `seed`).
    - Use `[[wikilinks]]` for every related concept; `## Connections` is mandatory.
-   - Mirror `sources` under `## Sources` with a one-line note each.
+   - **Do not** write a body `## Sources` block or cite `Raw/` paths in prose —
+     provenance stays in frontmatter `sources:` / `source_count` only.
 4. Place in the folder matching the tag: `Topics/` | `Concepts/` | `Entities/` | `Projects/` | `Logs/`.
 
 ## 3. Build, source, log

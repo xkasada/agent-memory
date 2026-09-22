@@ -676,6 +676,10 @@ def cmd_lint(args):
             warnings.append(f"{r}: missing '## Connections' section")
         elif not re.search(r"\[\[[^\]]+\]\]", body.split("## Connections", 1)[1]):
             warnings.append(f"{r}: '## Connections' has no [[wikilink]]")
+        if re.search(r"Raw/(?:Sources|Projects|Files)/", body):
+            warnings.append(f"{r}: Wiki body cites Raw/ path (keep provenance in frontmatter only)")
+        if re.search(r"(?m)^## Sources\s*$", body):
+            warnings.append(f"{r}: unexpected '## Sources' section (use frontmatter sources: only)")
 
     titles = {}
     for n in notes:
@@ -1104,15 +1108,11 @@ def render_project_note(
         "",
         "## Details",
         "",
-        details or f"_No compiled detail yet — see `{src['rel']}`._",
+        details or f"_No compiled detail yet._",
         "",
         "## Connections",
         "",
         "\n".join(conn),
-        "",
-        "## Sources",
-        "",
-        f'- `{src["rel"]}` — {kind} in project {name} (`.context` mirror)',
         "",
     ]
     return "\n".join(lines)
@@ -1150,13 +1150,9 @@ def render_project_anchor(name: str, raws, anchor_raw, children, shared=()) -> s
     ]
     conn_lines += [f"- [[{t}]] — shared concept" for t in shared]
     sources = "\n".join(f'  - "{s["rel"]}"' for s in raws)
-    src_desc = "\n".join(
-        f'- `{s["rel"]}` — {raw_project_kind(s["rel"]) or "context"} in `.context`' for s in raws
-    )
     one = _one_liner(anchor_raw["body"]) if anchor_raw else ""
     desc = one or (
-        f"Knowledge for the **{name}** project, compiled from the `.context/` mirror at "
-        f"`Raw/Projects/{name}/`."
+        f"Knowledge for the **{name}** project (compiled from the project context mirror)."
     )
     if any(c.get("kind") == "module" for c in children):
         desc += (
@@ -1188,10 +1184,6 @@ def render_project_anchor(name: str, raws, anchor_raw, children, shared=()) -> s
         "## Connections",
         "",
         "\n".join(conn_lines) or "_No components yet._",
-        "",
-        "## Sources",
-        "",
-        src_desc or "_No raw notes._",
         "",
     ]
     return "\n".join(lines)

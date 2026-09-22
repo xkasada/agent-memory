@@ -12,17 +12,20 @@ lives in `Schema/` — follow the links rather than guessing.
 
 1. **`Raw/Sources/` is source material, not compiled notes.** Treat it as immutable
    provenance. Never edit, rewrite, or delete raw files after capture, and never
-   store synthesized/reusable knowledge there.
+   store synthesized/reusable knowledge there. **`Raw/**` must not use `[[wikilinks]]`**
+   (plain text / URLs only) — Raw nodes must not appear as edges in the Obsidian graph.
+   The global graph filter is `-path:Raw` (see `.obsidian/graph.json`).
 2. **Write reusable knowledge only under `Wiki/`.** Any summary, synthesis, comparison,
    or connection that should be reused belongs in `Wiki/` — never in `Raw/`, never only
-   in chat history.
-3. **Keep every compiled note linked to one or more Raw sources.** Every `Wiki/` note
-   must list its supporting raw paths under `sources` (frontmatter) and `## Sources`,
-   with `source_count` matching. A note with no raw source is a bug (a pure index/log
-   note may legitimately be empty).
+   in chat history. The graph is Wiki-only.
+3. **Keep provenance in frontmatter only.** Every `Wiki/` note lists supporting
+   raw paths under `sources` (YAML) with matching `source_count`. A note with no
+   raw source is a bug (a pure index/log note may legitimately be empty). **Do not**
+   put `Raw/` paths in the note body (`## Sources`, prose, or backticks) — readers
+   stay in the wiki graph; agents use frontmatter / catalog for provenance.
 4. **Search `Wiki/catalog.jsonl` before opening broad Raw context.** Resolve the
    relevant pages from the catalog first; only then read the specific `Raw/` files
-   cited by those pages. Do not bulk-scan `Raw/` to answer a question.
+   cited by those pages' frontmatter. Do not bulk-scan `Raw/` to answer a question.
 5. **Run build, lint, and source checks before commits.** Regenerate the catalog and
    index (build), run the lint checklist, and verify every cited source exists. See
    [`Schema/workflow-examples.md`](Schema/workflow-examples.md) → "Pre-commit checks".
@@ -58,7 +61,7 @@ source material     interlinked             back as new pages
 | `Schema/` | This schema + templates | ⚠️ on explicit request only |
 | `Schema/_templates/` | Page templates | ⚠️ on explicit request only |
 | `.agents/skills/` | Local operational skills | ⚠️ on explicit request only |
-| `.obsidian/` | Obsidian config | ❌ never |
+| `.obsidian/` | Obsidian config | ❌ never (exception: global graph `search: -path:Raw`) |
 | `scripts/`, `.githooks/`, `tutorial/` | Tooling, hooks, docs | ⚠️ on request |
 
 ## Operations → skills
@@ -194,8 +197,10 @@ wiki pages **Title Case** (`LLM Wiki Pattern.md`); all internal references use
 ## Key Concepts
 ## Details
 ## Connections   ← mandatory, ≥1 [[wikilink]]
-## Sources       ← raw paths, mirrors frontmatter `sources:`
 ```
+
+Provenance lives in frontmatter `sources:` / `source_count` only — never a body
+`## Sources` block pointing at `Raw/`.
 
 Templates: [`Schema/_templates/`](Schema/_templates/) — `source-note.md`,
 `topic-note.md`, `concept-note.md`, `entity-note.md`, `project-note.md`, `log-note.md`,
@@ -205,8 +210,8 @@ Templates: [`Schema/_templates/`](Schema/_templates/) — `source-note.md`,
 
 - **One page per concept**, not per source.
 - **Connections mandatory** — every page links to ≥1 other page. No orphans.
-- **Every page is sourced** — `sources:` resolves to real files in `Raw/Sources/`.
-- **Keep pages focused** — split beyond ~500 words.
+- **Every page is sourced** — frontmatter `sources:` resolves to real files under `Raw/`.
+- **No Raw paths in Wiki bodies** — do not cite `Raw/Sources/` or `Raw/Projects/` in prose.
 - **Preserve nuance** — flag contradictions, never silently pick a side.
 - **Never delete raw files.** Even after compilation they remain the source of truth.
 - **Quality over quantity** — hold a thin source rather than write a stub you cannot source.

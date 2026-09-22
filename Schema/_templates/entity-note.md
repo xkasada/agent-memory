@@ -32,7 +32,3 @@ aliases: []
 
 - [[Related Project]] — {relationship}
 - [[Related Entity]] — {relationship}
-
-## Sources
-
-- `Raw/Sources/{filename}.md` — {what was drawn from this source}

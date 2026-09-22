@@ -42,7 +42,7 @@ judgment calls for the agent.
 - [ ] Every `sources` path exists on disk; `source_count` matches the list length.
 - [ ] Every `Raw/Sources/` source note is referenced by ≥1 compiled note, or still `Processed: false`.
 - [ ] No note claims a source it does not actually use; no invented citations.
-- [ ] `## Sources` in the body mirrors frontmatter `sources`.
+- [ ] Wiki **bodies** do not cite `Raw/` paths (no `## Sources` dumping raw paths; provenance is frontmatter only).
 
 ## 5. Unprocessed raw
 
